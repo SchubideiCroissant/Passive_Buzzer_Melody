@@ -27,7 +27,7 @@ void play_tone(uint gpio, uint freq, uint wrap_val) {
     uint slice_num = pwm_gpio_to_slice_num(gpio);
     float clock_divider = SYS_CLK_FREQ / (freq * wrap_val);  // Berechne den Clock Divider
     pwm_set_clkdiv(slice_num, clock_divider);                // Setze den Clock Divider
-    pwm_set_gpio_level(gpio, wrap_val / 2);                  // Setze den Duty Cycle auf 50% für maximalen Klang
+    pwm_set_gpio_level(gpio, wrap_val / 16);                  // Setze den Duty Cycle auf 50% für maximalen Klang
 }
 
 void stop_tone(uint gpio) {
