@@ -14,7 +14,7 @@
 #define BUZZER_PIN 0
 #define SWITCH_PIN 15
 
-const uint WRAP_VAL =  2048;   // PWM-Auflösung (z.B. 8-Bit)
+const uint WRAP_VAL =  4096;   // PWM-Auflösung (z.B. 8-Bit)
 const float SYS_CLK_FREQ = 125000000.0f; // Systemtaktfrequenz in Hz (125 MHz)
 volatile bool button_pressed = false;
 
@@ -59,7 +59,7 @@ void play_melody(const int melody[][2], int num_notes, int tempo) {
         int note = melody[i][0];
         int duration_value = duration(tempo, melody[i][1]);
 
-        if (note == -1) { // REST
+        if (note == REST) {
             stop_tone(BUZZER_PIN);
         } else {
             play_tone(BUZZER_PIN, note, WRAP_VAL);
@@ -70,6 +70,7 @@ void play_melody(const int melody[][2], int num_notes, int tempo) {
         sleep_ms(duration_value * 0.1); // 10% Pause zwischen Noten
     }
 }
+
 
 
 
@@ -90,53 +91,46 @@ int main() {
     gpio_set_irq_enabled_with_callback(SWITCH_PIN, GPIO_IRQ_EDGE_FALL, true, &switch_isr);
 
     const int melody[][2] = {
-    {REST, 2}, {NOTE_D5, 8}, {NOTE_B4, 4}, {NOTE_D5, 8},
-    {NOTE_CS5, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_A4, 2},
-    {REST, 8}, {NOTE_A4, 8}, {NOTE_FS5, 8}, {NOTE_E5, 4},
-    {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4},
-    {NOTE_A4, 2}, {REST, 4}, {NOTE_D5, 8}, {NOTE_B4, 4},
-    {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4},
-    {NOTE_A4, 2}, {REST, 8}, {NOTE_B4, 8}, {NOTE_B4, 8},
-    {NOTE_G4, 4}, {NOTE_B4, 8}, {NOTE_A4, 4}, {NOTE_B4, 8},
-    {NOTE_A4, 4}, {NOTE_D4, 2}, {REST, 4}, {NOTE_D5, 8},
-    {NOTE_B4, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_D5, 8},
-    {NOTE_CS5, 4}, {NOTE_A4, 2}, {REST, 8}, {NOTE_A4, 8},
-    {NOTE_FS5, 8}, {NOTE_E5, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4},
-    {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_A4, 2}, {REST, 4},
-    {NOTE_D5, 8}, {NOTE_B4, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4},
-    {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_A4, 2}, {REST, 8},
-    {NOTE_B4, 8}, {NOTE_B4, 8}, {NOTE_G4, 4}, {NOTE_B4, 8},
-    {NOTE_A4, 4}, {NOTE_B4, 8}, {NOTE_A4, 4}, {NOTE_D4, 2},
-    {REST, 4}, {NOTE_D5, 8}, {NOTE_B4, 4}, {NOTE_D5, 8},
-    {NOTE_CS5, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_A4, 2},
-    {REST, 8}, {NOTE_A4, 8}, {NOTE_FS5, 8}, {NOTE_E5, 4},
-    {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4},
-    {NOTE_A4, 2}, {REST, 4}, {NOTE_D5, 8}, {NOTE_B4, 4},
-    {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4},
-    {NOTE_A4, 2}, {REST, 8}, {NOTE_B4, 8}, {NOTE_B4, 8},
-    {NOTE_G4, 4}, {NOTE_B4, 8}, {NOTE_A4, 4}, {NOTE_B4, 8},
-    {NOTE_A4, 4}, {NOTE_D4, 8}, {NOTE_D4, 8}, {NOTE_FS4, 8},
-    {NOTE_E4, -1}, {REST, 8}, {NOTE_D4, 8}, {NOTE_E4, 8},
-    {NOTE_FS4, -1}, {REST, 8}, {NOTE_D4, 8}, {NOTE_D4, 8},
-    {NOTE_FS4, 8}, {NOTE_F4, -1}, {REST, 8}, {NOTE_D4, 8},
-    {NOTE_F4, 8}, {NOTE_E4, -1}, {REST, 2}, {NOTE_D5, 8},
-    {NOTE_B4, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_D5, 8},
-    {NOTE_CS5, 4}, {NOTE_A4, 2}, {REST, 8}, {NOTE_A4, 8},
-    {NOTE_FS5, 8}, {NOTE_E5, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4},
-    {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_A4, 2}, {REST, 4},
-    {NOTE_D5, 8}, {NOTE_B4, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4},
-    {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_A4, 2}, {REST, 8},
-    {NOTE_B4, 8}, {NOTE_B4, 8}, {NOTE_G4, 4}, {NOTE_B4, 8},
-    {NOTE_A4, 4}, {NOTE_B4, 8}, {NOTE_A4, 4}, {NOTE_D4, 8},
-    {NOTE_D4, 8}, {NOTE_FS4, 8}, {NOTE_E4, -1}, {REST, 8},
-    {NOTE_D4, 8}, {NOTE_E4, 8}, {NOTE_FS4, -1}, {REST, 8},
-    {NOTE_D4, 8}, {NOTE_D4, 8}, {NOTE_FS4, 8}, {NOTE_F4, -1},
-    {REST, 8}, {NOTE_D4, 8}, {NOTE_F4, 8}, {NOTE_E4, 8},
-    {NOTE_E4, -2}, {NOTE_A4, 8}, {NOTE_CS5, 8}, {NOTE_FS5, 8},
-    {NOTE_E5, 4}, {NOTE_D5, 8}, {NOTE_A5, -4}
+    {NOTE_FS4, 8}, {REST, 8}, {NOTE_A4, 8}, {NOTE_CS5, 8},
+    {REST, 8}, {NOTE_A4, 8}, {REST, 8}, {NOTE_FS4, 8},
+    {NOTE_D4, 8}, {NOTE_D4, 8}, {NOTE_D4, 8}, {REST, 8},
+    {REST, 4}, {REST, 8}, {NOTE_CS4, 8}, {NOTE_D4, 8},
+    {NOTE_FS4, 8}, {NOTE_A4, 8}, {NOTE_CS5, 8}, {REST, 8},
+    {NOTE_A4, 8}, {REST, 8}, {NOTE_F4, 8}, {NOTE_E5, -4},
+    {NOTE_DS5, 8}, {NOTE_D5, 8}, {REST, 8}, {REST, 4},
+    {NOTE_GS4, 8}, {REST, 8}, {NOTE_CS5, 8}, {NOTE_FS4, 8},
+    {REST, 8}, {NOTE_CS5, 8}, {REST, 8}, {NOTE_GS4, 8},
+    {REST, 8}, {NOTE_CS5, 8}, {NOTE_G4, 8}, {NOTE_FS4, 8},
+    {REST, 8}, {NOTE_E4, 8}, {REST, 8}, {NOTE_E4, 8},
+    {NOTE_E4, 8}, {NOTE_E4, 8}, {REST, 8}, {REST, 4},
+    {NOTE_E4, 8}, {NOTE_E4, 8}, {NOTE_E4, 8}, {REST, 8},
+    {REST, 4}, {NOTE_DS4, 8}, {NOTE_D4, 8}, {NOTE_CS4, 8},
+    {REST, 8}, {NOTE_A4, 8}, {NOTE_CS5, 8}, {REST, 8},
+    {NOTE_A4, 8}, {REST, 8}, {NOTE_FS4, 8}, {NOTE_D4, 8},
+    {NOTE_D4, 8}, {NOTE_D4, 8}, {REST, 8}, {NOTE_E5, 8},
+    {NOTE_E5, 8}, {NOTE_E5, 8}, {REST, 8}, {REST, 8},
+    {NOTE_FS4, 8}, {NOTE_A4, 8}, {NOTE_CS5, 8}, {REST, 8},
+    {NOTE_A4, 8}, {REST, 8}, {NOTE_F4, 8}, {NOTE_E5, 2},
+    {NOTE_D5, 8}, {REST, 8}, {REST, 4}, {NOTE_B4, 8},
+    {NOTE_G4, 8}, {NOTE_D4, 8}, {NOTE_CS4, 4}, {NOTE_B4, 8},
+    {NOTE_G4, 8}, {NOTE_CS4, 8}, {NOTE_A4, 8}, {NOTE_FS4, 8},
+    {NOTE_C4, 8}, {NOTE_B3, 4}, {NOTE_F4, 8}, {NOTE_D4, 8},
+    {NOTE_B3, 8}, {NOTE_E4, 8}, {NOTE_E4, 8}, {NOTE_E4, 8},
+    {REST, 4}, {REST, 4}, {NOTE_AS4, 4}, {NOTE_CS5, 8},
+    {NOTE_D5, 8}, {NOTE_FS5, 8}, {NOTE_A5, 8}, {REST, 8},
+    {REST, 4}, {REST, 2}, {NOTE_A3, 4}, {NOTE_AS3, 4},
+    {NOTE_A3, -4}, {NOTE_A3, 8}, {NOTE_A3, 2}, {REST, 4},
+    {NOTE_A3, 8}, {NOTE_AS3, 8}, {NOTE_A3, 8}, {NOTE_F4, 4},
+    {NOTE_C4, 8}, {NOTE_A3, -4}, {NOTE_A3, 8}, {NOTE_A3, 2},
+    {REST, 2}, {NOTE_B3, 4}, {NOTE_C4, 4}, {NOTE_CS4, -4},
+    {NOTE_C4, 8}, {NOTE_CS4, 2}, {REST, 4}, {NOTE_CS4, 8},
+    {NOTE_C4, 8}, {NOTE_CS4, 8}, {NOTE_GS4, 4}, {NOTE_DS4, 8},
+    {NOTE_CS4, -4}, {NOTE_DS4, 8}, {NOTE_B3, 1}, {NOTE_E4, 4},
+    {NOTE_E4, 4}, {NOTE_E4, 4}, {REST, 8}
 };
+
     const int num_notes = sizeof(melody) / sizeof(melody[0]); // Beispielanzahl von Noten
-    int tempo = 85; // BPM - Beats per Minute
+    int tempo = 114; // BPM - Beats per Minute, Anpassen je nach Lied
     while (true) {
         if (button_pressed) {
             play_melody(melody, num_notes, tempo);  // Melodie abspielen
