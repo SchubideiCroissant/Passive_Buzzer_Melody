@@ -1,18 +1,20 @@
 #include "pico/stdlib.h"
 #include "hardware/pwm.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include "pitches.h"
 
 
 //Bei einem passiven Buzzer geht es weniger um das pwm level und mehr um die eigentliche Frequenz die der Buzzer ausgibt
 // Diese Frequenz muss mithilfe der Formel angepasst werden: 
-// f=   (Systemtaktfrequenz)
+// f =  (Systemtaktfrequenz)/
 // (PWM-Wrap-Wert) × (Clock Divider)
+// https://onlinesequencer.net/ für Songs
 
 #define BUZZER_PIN 0
 #define SWITCH_PIN 15
 
-const uint WRAP_VAL = 255;   // PWM-Auflösung (z.B. 8-Bit)
+const uint WRAP_VAL =  2048;   // PWM-Auflösung (z.B. 8-Bit)
 const float SYS_CLK_FREQ = 125000000.0f; // Systemtaktfrequenz in Hz (125 MHz)
 volatile bool button_pressed = false;
 
@@ -26,28 +28,50 @@ void setup_pwm(uint gpio, uint wrap_val) {
 void play_tone(uint gpio, uint freq, uint wrap_val) {
     uint slice_num = pwm_gpio_to_slice_num(gpio);
     float clock_divider = SYS_CLK_FREQ / (freq * wrap_val);  // Berechne den Clock Divider
+    printf("Berechnete Frequenz: %.2f Hz\n", SYS_CLK_FREQ / clock_divider*WRAP_VAL);
+
     pwm_set_clkdiv(slice_num, clock_divider);                // Setze den Clock Divider
-    pwm_set_gpio_level(gpio, wrap_val / 16);                  // Setze den Duty Cycle auf 50% für maximalen Klang
+    pwm_set_gpio_level(gpio, wrap_val / 2);                  // Setze den Duty Cycle auf 50% für maximalen Klang
 }
 
 void stop_tone(uint gpio) {
     pwm_set_gpio_level(gpio, 0); // Stoppe den Ton, indem der PWM-Level auf 0 gesetzt wird
 }
 
-void play_melody() {
-    printf("Melodie....");
-    play_tone(BUZZER_PIN, NOTE_A4, WRAP_VAL); // Spiele den Ton A4 (440 Hz)
-    sleep_ms(1000); // Ton für 1 Sekunde halten
-    stop_tone(BUZZER_PIN); // Stoppe den Ton
-    sleep_ms(500); // Pause für 0.5 Sekunden
+int duration(int tempo, int t) {
+    // Dauer einer ganzen Note in Millisekunden berechnen (60s/Tempo) * 4 Takte
+    float wholenote = (60000.0f / tempo) * 4.0f;
 
-    play_tone(BUZZER_PIN, NOTE_C5, WRAP_VAL); // Spiele den Ton C5 (523 Hz)
-    sleep_ms(1000); // Ton für 1 Sekunde halten
-    stop_tone(BUZZER_PIN); // Stoppe den Ton
-    sleep_ms(500); // Pause für 0.5 Sekunden
-    printf("Melodie Ende....");
-    // Weitere Töne können hier hinzugefügt werden
+    int noteDuration;
+    if (t > 0) {
+        noteDuration = static_cast<int>(wholenote / t);
+    } else if (t < 0) {
+        noteDuration = static_cast<int>(wholenote / abs(t));
+        noteDuration = static_cast<int>(noteDuration * 1.5); // Punktierte Noten
+    } else {
+        noteDuration = 0; // Keine Dauer für "REST"
+    }
+
+    return noteDuration;
 }
+void play_melody(const int melody[][2], int num_notes, int tempo) {
+    for (int i = 0; i < num_notes; ++i) {
+        int note = melody[i][0];
+        int duration_value = duration(tempo, melody[i][1]);
+
+        if (note == -1) { // REST
+            stop_tone(BUZZER_PIN);
+        } else {
+            play_tone(BUZZER_PIN, note, WRAP_VAL);
+        }
+
+        sleep_ms(duration_value * 0.9); // 90% der Dauer spielen
+        stop_tone(BUZZER_PIN);
+        sleep_ms(duration_value * 0.1); // 10% Pause zwischen Noten
+    }
+}
+
+
 
 void switch_isr(uint gpio, uint32_t event_mask) {
     button_pressed = true; // Setze den Zustand, um die Melodie in der Hauptschleife abzuspielen
@@ -65,9 +89,57 @@ int main() {
     // Interrupt für den Button konfigurieren
     gpio_set_irq_enabled_with_callback(SWITCH_PIN, GPIO_IRQ_EDGE_FALL, true, &switch_isr);
 
+    const int melody[][2] = {
+    {REST, 2}, {NOTE_D5, 8}, {NOTE_B4, 4}, {NOTE_D5, 8},
+    {NOTE_CS5, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_A4, 2},
+    {REST, 8}, {NOTE_A4, 8}, {NOTE_FS5, 8}, {NOTE_E5, 4},
+    {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4},
+    {NOTE_A4, 2}, {REST, 4}, {NOTE_D5, 8}, {NOTE_B4, 4},
+    {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4},
+    {NOTE_A4, 2}, {REST, 8}, {NOTE_B4, 8}, {NOTE_B4, 8},
+    {NOTE_G4, 4}, {NOTE_B4, 8}, {NOTE_A4, 4}, {NOTE_B4, 8},
+    {NOTE_A4, 4}, {NOTE_D4, 2}, {REST, 4}, {NOTE_D5, 8},
+    {NOTE_B4, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_D5, 8},
+    {NOTE_CS5, 4}, {NOTE_A4, 2}, {REST, 8}, {NOTE_A4, 8},
+    {NOTE_FS5, 8}, {NOTE_E5, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4},
+    {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_A4, 2}, {REST, 4},
+    {NOTE_D5, 8}, {NOTE_B4, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4},
+    {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_A4, 2}, {REST, 8},
+    {NOTE_B4, 8}, {NOTE_B4, 8}, {NOTE_G4, 4}, {NOTE_B4, 8},
+    {NOTE_A4, 4}, {NOTE_B4, 8}, {NOTE_A4, 4}, {NOTE_D4, 2},
+    {REST, 4}, {NOTE_D5, 8}, {NOTE_B4, 4}, {NOTE_D5, 8},
+    {NOTE_CS5, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_A4, 2},
+    {REST, 8}, {NOTE_A4, 8}, {NOTE_FS5, 8}, {NOTE_E5, 4},
+    {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4},
+    {NOTE_A4, 2}, {REST, 4}, {NOTE_D5, 8}, {NOTE_B4, 4},
+    {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4},
+    {NOTE_A4, 2}, {REST, 8}, {NOTE_B4, 8}, {NOTE_B4, 8},
+    {NOTE_G4, 4}, {NOTE_B4, 8}, {NOTE_A4, 4}, {NOTE_B4, 8},
+    {NOTE_A4, 4}, {NOTE_D4, 8}, {NOTE_D4, 8}, {NOTE_FS4, 8},
+    {NOTE_E4, -1}, {REST, 8}, {NOTE_D4, 8}, {NOTE_E4, 8},
+    {NOTE_FS4, -1}, {REST, 8}, {NOTE_D4, 8}, {NOTE_D4, 8},
+    {NOTE_FS4, 8}, {NOTE_F4, -1}, {REST, 8}, {NOTE_D4, 8},
+    {NOTE_F4, 8}, {NOTE_E4, -1}, {REST, 2}, {NOTE_D5, 8},
+    {NOTE_B4, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_D5, 8},
+    {NOTE_CS5, 4}, {NOTE_A4, 2}, {REST, 8}, {NOTE_A4, 8},
+    {NOTE_FS5, 8}, {NOTE_E5, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4},
+    {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_A4, 2}, {REST, 4},
+    {NOTE_D5, 8}, {NOTE_B4, 4}, {NOTE_D5, 8}, {NOTE_CS5, 4},
+    {NOTE_D5, 8}, {NOTE_CS5, 4}, {NOTE_A4, 2}, {REST, 8},
+    {NOTE_B4, 8}, {NOTE_B4, 8}, {NOTE_G4, 4}, {NOTE_B4, 8},
+    {NOTE_A4, 4}, {NOTE_B4, 8}, {NOTE_A4, 4}, {NOTE_D4, 8},
+    {NOTE_D4, 8}, {NOTE_FS4, 8}, {NOTE_E4, -1}, {REST, 8},
+    {NOTE_D4, 8}, {NOTE_E4, 8}, {NOTE_FS4, -1}, {REST, 8},
+    {NOTE_D4, 8}, {NOTE_D4, 8}, {NOTE_FS4, 8}, {NOTE_F4, -1},
+    {REST, 8}, {NOTE_D4, 8}, {NOTE_F4, 8}, {NOTE_E4, 8},
+    {NOTE_E4, -2}, {NOTE_A4, 8}, {NOTE_CS5, 8}, {NOTE_FS5, 8},
+    {NOTE_E5, 4}, {NOTE_D5, 8}, {NOTE_A5, -4}
+};
+    const int num_notes = sizeof(melody) / sizeof(melody[0]); // Beispielanzahl von Noten
+    int tempo = 85; // BPM - Beats per Minute
     while (true) {
         if (button_pressed) {
-            play_melody();  // Melodie abspielen
+            play_melody(melody, num_notes, tempo);  // Melodie abspielen
             button_pressed = false; // Zustand zurücksetzen
         }
         sleep_ms(10); // Kleine Verzögerung zur Entlastung der CPU
