@@ -47,8 +47,8 @@
 # 40. Professor Layton's theme
 
 
-melody = []
-notes = []
+#melody = []
+#notes = []
 
 
 # 
