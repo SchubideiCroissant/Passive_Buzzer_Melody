@@ -1,4 +1,6 @@
 /*
+Die Arrays sind für C++ angepasst. Einfach im Code "const int melody ersetzen" und "int tempo" =anpassen
+
 # Songs to play with a buzzer connected to a Raspberry Pi Pico.
 # Ported from https://github.com/robsoncouto/arduino-songs
 # 

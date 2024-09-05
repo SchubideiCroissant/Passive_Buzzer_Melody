@@ -14,8 +14,8 @@
 #define BUZZER_PIN 0
 #define SWITCH_PIN 15
 
-const uint WRAP_VAL =  4096;   // PWM-Auflösung (z.B. 8-Bit)
-const float SYS_CLK_FREQ = 125000000.0f; // Systemtaktfrequenz in Hz (125 MHz)
+const uint WRAP_VAL =  4096;   // PWM-Auflösung 
+const float SYS_CLK_FREQ = 125000000.0f; // Systemtaktfrequenz in Hz (125 MHz bei Raspberry Pico W)
 volatile bool button_pressed = false;
 
 void setup_pwm(uint gpio, uint wrap_val) {
@@ -71,9 +71,6 @@ void play_melody(const int melody[][2], int num_notes, int tempo) {
     }
 }
 
-
-
-
 void switch_isr(uint gpio, uint32_t event_mask) {
     button_pressed = true; // Setze den Zustand, um die Melodie in der Hauptschleife abzuspielen
 }
@@ -90,6 +87,7 @@ int main() {
     // Interrupt für den Button konfigurieren
     gpio_set_irq_enabled_with_callback(SWITCH_PIN, GPIO_IRQ_EDGE_FALL, true, &switch_isr);
 
+    int tempo = 130;
     const int melody[][2] = {
     { NOTE_E5, 16 },
     { NOTE_E5, 8 },
@@ -344,7 +342,6 @@ int main() {
     { NOTE_B3, 16 },
     { NOTE_D4, -8 },
 };
-    int tempo = 130;
     const int num_notes = sizeof(melody) / sizeof(melody[0]); // Beispielanzahl von Noten
      // BPM - Beats per Minute, Anpassen je nach Lied
     while (true) {
