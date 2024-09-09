@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include "pitches.h"
 
-
-//Bei einem passiven Buzzer geht es weniger um das pwm level und mehr um die eigentliche Frequenz die der Buzzer ausgibt
+// Der Passive Buzzer ist der ohne Aufkleber, S- Output, VCC, - -> GND
+// Bei einem passiven Buzzer geht es weniger um das pwm level und mehr um die eigentliche Frequenz die der Buzzer ausgibt
 // Diese Frequenz muss mithilfe der Formel angepasst werden: 
 // f =  (Systemtaktfrequenz)/
 // (PWM-Wrap-Wert) × (Clock Divider)
