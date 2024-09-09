@@ -20,5 +20,13 @@ Die Textdatei enthält Informationen zu mehreren Songs:
 
 Der passive Buzzer benötigt bestimmte Frequenzen, um die korrekten Töne zu erzeugen. Diese Frequenzen sind in der Datei **`pitches.h`** als Konstanten definiert. Für jede Note (z.B. C4, G3 usw.) ist eine bestimmte Frequenz in Hertz (Hz) angegeben.
 
-Um die richtige PWM-Frequenz zum passiven Buzzer zu senden, nutzt man den 
+Um die richtige PWM-Frequenz zum passiven Buzzer zu senden, nutzt man folgende Formel:
 
+f =  (Systemtaktfrequenz)/
+( (PWM-Wrap-Wert) × (Clock Divider) )
+
+f - Gewünschte Frequenz
+Systemtaktfrequenz - 125 MHz
+PWM-Wrap Wert - 1024
+
+Da f bekannt ist muss die Formel nach Clock Divider umgestellt werden, den man dann mithilfe einer Funktion setzen kann.
